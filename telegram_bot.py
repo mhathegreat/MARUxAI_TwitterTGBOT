@@ -18,10 +18,14 @@ ACCESS_SECRET = os.getenv("ACCESS_SECRET")
 BEARER_TOKEN = os.getenv("BEARER_TOKEN")  # Needed for Twitter API v2
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Setup Twitter API v1.1 for posting tweets
-auth = tweepy.OAuthHandler(API_KEY, API_SECRET)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
-api = tweepy.API(auth, wait_on_rate_limit=True)
+# Setup Twitter API v2
+client = tweepy.Client(
+    bearer_token=BEARER_TOKEN,
+    consumer_key=API_KEY, 
+    consumer_secret=API_SECRET,
+    access_token=ACCESS_TOKEN, 
+    access_token_secret=ACCESS_SECRET
+)
 
 # Configure Gemini AI
 genai.configure(api_key=GEMINI_API_KEY)
@@ -33,21 +37,13 @@ logging.basicConfig(level=logging.INFO)
 
 def get_tweet_text(tweet_url):
     """ Fetch tweet text using Twitter API v2 """
-    tweet_id = tweet_url.split("/")[-1]
-
-    url = f"https://api.twitter.com/2/tweets/{tweet_id}?tweet.fields=text"
-    headers = {"Authorization": f"Bearer {BEARER_TOKEN}"}
-
     try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            tweet_data = response.json()
-            return tweet_data["data"]["text"]
-        else:
-            logging.error(
-                f"Error fetching tweet: {response.status_code} - {response.text}"
-            )
-            return None
+        tweet_id = tweet_url.split("/")[-1]
+        tweet = client.get_tweet(tweet_id)
+        if tweet and tweet.data:
+            return tweet.data.text
+        logging.error("Tweet not found")
+        return None
     except Exception as e:
         logging.error(f"Error fetching tweet: {e}")
         return None
@@ -83,7 +79,7 @@ async def quote_tweet(update: Update, context: CallbackContext):
     quoted_tweet = f"{ai_response}\n\n🔗 {tweet_url}"
 
     try:
-        api.update_status(quoted_tweet)
+        client.create_tweet(text=quoted_tweet)
         await update.message.reply_text("✅ Quote retweeted successfully!")
     except Exception as e:
         await update.message.reply_text("⚠️ Error posting tweet.")
@@ -107,7 +103,7 @@ async def reply_tweet(update: Update, context: CallbackContext):
     ai_response = await generate_ai_response(tweet_text)
 
     try:
-        api.update_status(ai_response, in_reply_to_status_id=tweet_id)
+        client.create_tweet(text=ai_response, in_reply_to_tweet_id=tweet_id)
         await update.message.reply_text("✅ Replied successfully!")
     except Exception as e:
         await update.message.reply_text("⚠️ Error posting reply.")

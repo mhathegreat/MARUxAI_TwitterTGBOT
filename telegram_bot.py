@@ -39,7 +39,10 @@ def get_tweet_text(tweet_url):
     """ Fetch tweet text using Twitter API v2 """
     try:
         tweet_id = tweet_url.split("/")[-1]
-        tweet = client.get_tweet(tweet_id)
+        tweet = client.get_tweet(
+            tweet_id,
+            tweet_fields=['text']
+        )
         if tweet and tweet.data:
             return tweet.data.text
         logging.error("Tweet not found")

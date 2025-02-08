@@ -1,0 +1,16 @@
+modules = ["python-3.11"]
+[nix]
+channel = "stable-24_05"
+[run]
+command = "python3 telegram_bot.py"
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 39480577
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 telegram_bot.py"

@@ -4,7 +4,7 @@ import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Load API keys from .env file
 load_dotenv()
@@ -53,7 +53,7 @@ def get_tweet_text(tweet_url):
         return None
 
 
-def quote_tweet(update: Update, context: CallbackContext):
+def quote_tweet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ Handles /quote command to generate a quote retweet """
     if len(context.args) != 1:
         update.message.reply_text("Usage: /quote TWEET_LINK")
@@ -77,7 +77,7 @@ def quote_tweet(update: Update, context: CallbackContext):
         logging.error(f"Error posting tweet: {e}")
 
 
-def reply_tweet(update: Update, context: CallbackContext):
+def reply_tweet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ Handles /reply command to reply to a tweet """
     if len(context.args) != 1:
         update.message.reply_text("Usage: /reply TWEET_LINK")
@@ -102,16 +102,15 @@ def reply_tweet(update: Update, context: CallbackContext):
 
 
 # Start Telegram Bot
-def main():
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+async def main():
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    dp.add_handler(CommandHandler("quote", quote_tweet))
-    dp.add_handler(CommandHandler("reply", reply_tweet))
+    application.add_handler(CommandHandler("quote", quote_tweet))
+    application.add_handler(CommandHandler("reply", reply_tweet))
 
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())

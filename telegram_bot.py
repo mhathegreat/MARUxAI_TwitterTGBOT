@@ -4,7 +4,7 @@ import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Load API keys from .env file
 load_dotenv()
